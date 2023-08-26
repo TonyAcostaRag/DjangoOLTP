@@ -15,19 +15,15 @@ class AccountSerializer(ModelSerializer):
         model = Account
         fields = "__all__"
 
-    """
     def create(self, validated_data):
         print(f'\n-------> Account Serializer validated_data: {validated_data}')
         user_data = validated_data.pop('user')
         print(f'\n-------> Account Serializer user_data: {user_data}')
-        #user_serializer = UserSerializer(data=user_data)  # Create a UserSerializer instance
-        #print(f'\n-------> Account Serializer user_serializer: {user_serializer}')
-        #user_serializer.is_valid(raise_exception=True)
-        user = user_data.save()  # Save the user instance
-
-        account = Account.objects.create(user=user)
+        validated_data['user'] = user_data
+        print(f'\n-------> Account Serializer validated_data: {validated_data}')
+        account = Account.objects.create(**validated_data)
+        print("Returning account")
         return account
-    """
 
 
 class CardSerializer(ModelSerializer):

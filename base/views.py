@@ -61,10 +61,6 @@ class UserDetail(APIView):
 class AccountList(APIView):
     def get(self, request, username):
 
-        query = request.GET.get('query')
-        if query == None:
-            query = ''
-
         try:
             user = User.objects.get(username=username)
             accounts = Account.objects.filter(user=user)
@@ -73,13 +69,26 @@ class AccountList(APIView):
         except User.DoesNotExist:
             return Response({'error' : 'User not found'})
 
-    def post(self, request):
-        serializer = AccountSerializer(data=request.data)
+    def post(self, request, username):
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status.HTTP_404_NOT_FOUND)
+
+        print("Just before serializer")
+        serializer = AccountSerializer(data={**request.data, 'user': user.id})
+
+        print("Checking to see if data deserialized is valid")
         if serializer.is_valid():
             serializer.save()
-            return status.HTTP_201_CREATED
+            print("data is valid, creating")
+            return Response(serializer.data, status.HTTP_201_CREATED)
         else:
-            return status.HTTP_400_BAD_REQUEST
+            return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 class AccountDetail(APIView):
