@@ -118,9 +118,17 @@ class CardList(APIView):
         except Card.DoesNotExist:
             raise JsonResponse({'error': 'Card does not exist'})
 
+    def post(self, request, username, account_name):
 
-    def post(self, request, account_name):
-        serializer = CardSerializer(data=request.data)
+        try:
+            user = User.objects.get(username=username)
+            account = Account.objects.get(user=user)
+        except User.DoesNotExist:
+            raise JsonResponse({'error': 'User does not exist'}, status.HTTP_404_NOT_FOUND)
+        except Account.DoesNotExist:
+            raise JsonResponse({'error': 'Account does not exist'}, status.HTTP_404_NOT_FOUND)
+
+        serializer = CardSerializer(data={**request.data, 'account': account.id})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status.HTTP_201_CREATED)
