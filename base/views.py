@@ -28,15 +28,15 @@ class UserList(APIView):
 
         users = User.objects.filter(Q(username__icontains=query) | Q(age__icontains=query))
         serializer = UserSerializer(users, many=True)
-        Response(serializer.data)
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            Response(serializer.data, status.HTTP_201_CREATED)
+            return Response(serializer.data, status.HTTP_201_CREATED)
         else:
-            Response(serializer.data, status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
 
 class UserDetail(APIView):
