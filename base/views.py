@@ -58,43 +58,28 @@ class UserDetail(APIView):
         return JsonResponse({'message': 'User was successfully deleted'})
 
 
-@api_view(['GET', 'POST'])
-def account_list(request, username):
-    if request.method == 'GET':
+class AccountList(APIView):
+    def get(self, request, username):
+
         query = request.GET.get('query')
         if query == None:
             query = ''
 
-        print(f'Query: {query}')
-
         try:
             user = User.objects.get(username=username)
-
             accounts = Account.objects.filter(user=user)
-            accounts_data = [
-                {'id': account.id,
-                 'user': account.user,
-                 'account_name': account.account_name,
-                 'balance': account.balance,
-                 'open_date': account.open_date.strftime('%Y-%m-%d')} for account in accounts]
-            serializer = AccountSerializer(accounts_data, many=True)
+            serializer = AccountSerializer(accounts, many=True)
             return Response(serializer.data)
         except User.DoesNotExist:
-            return Response({'error': 'User not found.'}, status=404)
+            return Response({'error' : 'User not found'})
 
-    if request.method == 'POST':
-
-        print(f'\n-------> Account Serializer serializer input: {AccountSerializer(data=request.data)}')
+    def post(self, request):
         serializer = AccountSerializer(data=request.data)
-        print(f'\n-------> Account Serializer serializer output: {serializer}')
-
-
         if serializer.is_valid():
             serializer.save()
-            print(f'\n{Response(serializer.data, status=status.HTTP_201_CREATED)}')
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return status.HTTP_201_CREATED
+        else:
+            return status.HTTP_400_BAD_REQUEST
 
 
 class AccountDetail(APIView):
