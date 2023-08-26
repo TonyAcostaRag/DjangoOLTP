@@ -14,7 +14,7 @@ class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     account_name = models.CharField(max_length=50,default='Default value')
     balance = models.FloatField(default=0.0, blank=False, null=False)
-    open_date = models.DateField(auto_now_add=False, blank=False, null=False)
+    open_date = models.DateField(auto_now_add=True, blank=False, null=False)
 
     def __str__(self):
         return self.user
@@ -27,3 +27,9 @@ class Card(models.Model):
 
     def __str__(self):
         return self.account
+
+class Transaction(models.Model):
+    card_id = models.ForeignKey(Card, on_delete=models.CASCADE)
+    amount = models.FloatField(default=0.0, blank=False, null=False)
+    transaction_type = models.CharField(max_length=10) # Deposit, Withdrawal
+    craete_date = models.DateField(auto_now_add=True)
