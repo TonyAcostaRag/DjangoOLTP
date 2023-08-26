@@ -1,20 +1,21 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from .models import User, Account, Card
+from .models import User, Account, Card, Transaction
 
 
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'age']
+        fields = "__all__"
 
 
 class AccountSerializer(ModelSerializer):
-    user = UserSerializer()
+    #user = UserSerializer()
 
     class Meta:
         model = Account
-        fields = ['id', 'user', 'account_name', 'balance', 'open_date']
+        fields = "__all__"
 
+    """
     def create(self, validated_data):
         print(f'\n-------> Account Serializer validated_data: {validated_data}')
         user_data = validated_data.pop('user')
@@ -24,19 +25,19 @@ class AccountSerializer(ModelSerializer):
         #user_serializer.is_valid(raise_exception=True)
         user = user_data.save()  # Save the user instance
 
-
-
         account = Account.objects.create(user=user)
         return account
+    """
 
 
 class CardSerializer(ModelSerializer):
-    account = AccountSerializer()
+    #account = AccountSerializer()
 
     class Meta:
         model = Card
-        fields = ['id', 'account', 'name', 'cvv']
+        fields = "__all__"
 
+    """
     def create(self, validated_data):
         account_data = validated_data.pop('account')
         #account_serializer = AccountSerializer(data=account_data)  # Create a UserSerializer instance
@@ -45,3 +46,10 @@ class CardSerializer(ModelSerializer):
 
         card = Card.objects.create(account=account_data, **validated_data)
         return card
+    """
+
+
+class TransactionSerializer(ModelSerializer):
+    class Meta:
+        model = Transaction
+        field = "__all__"
