@@ -19,34 +19,24 @@ def endpoints(request):
 
 
 # READ
-@api_view(['GET', 'POST'])
-def user_list(request):
-    if request.method == 'GET':
+class UserList(APIView):
+
+    def get(self, request):
         query = request.GET.get('query')
         if query == None:
             query = ''
 
-        print(f'\nprinting request parameter: {request}')
-
-        print(f'\nQuery: -->{query}<--')
         users = User.objects.filter(Q(username__icontains=query) | Q(age__icontains=query))
-        print(f'\nList of the users: {list(users)}')
         serializer = UserSerializer(users, many=True)
-        print(f'\nUserSerializer: {serializer}')
-        print(f'\nResponse: {Response(serializer.data)}')
-        return Response(serializer.data)
+        Response(serializer.data)
 
-    if request.method == 'POST':
-        print(f'\nprinting request parameter: {request}')
+    def post(self, request):
         serializer = UserSerializer(data=request.data)
-        print(f'\nUserSerializer: {serializer}')
-
         if serializer.is_valid():
             serializer.save()
-            print(f'\nResponse: {Response(serializer.data, status=status.HTTP_201_CREATED)}')
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            Response(serializer.data, status.HTTP_201_CREATED)
+        else:
+            Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
 
 class UserDetail(APIView):
