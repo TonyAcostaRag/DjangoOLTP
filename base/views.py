@@ -76,19 +76,13 @@ class AccountList(APIView):
         except User.DoesNotExist:
             return Response({'error': 'User not found.'}, status.HTTP_404_NOT_FOUND)
 
-        print("Just before serializer")
         serializer = AccountSerializer(data={**request.data, 'user': user.id})
 
-        print("Checking to see if data deserialized is valid")
         if serializer.is_valid():
             serializer.save()
-            print("data is valid, creating")
             return Response(serializer.data, status.HTTP_201_CREATED)
         else:
             return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
-
-
-
 
 
 class AccountDetail(APIView):

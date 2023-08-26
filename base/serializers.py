@@ -9,20 +9,15 @@ class UserSerializer(ModelSerializer):
 
 
 class AccountSerializer(ModelSerializer):
-    #user = UserSerializer()
 
     class Meta:
         model = Account
         fields = "__all__"
 
     def create(self, validated_data):
-        print(f'\n-------> Account Serializer validated_data: {validated_data}')
         user_data = validated_data.pop('user')
-        print(f'\n-------> Account Serializer user_data: {user_data}')
         validated_data['user'] = user_data
-        print(f'\n-------> Account Serializer validated_data: {validated_data}')
         account = Account.objects.create(**validated_data)
-        print("Returning account")
         return account
 
 
