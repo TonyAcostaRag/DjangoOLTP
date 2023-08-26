@@ -22,22 +22,16 @@ class AccountSerializer(ModelSerializer):
 
 
 class CardSerializer(ModelSerializer):
-    #account = AccountSerializer()
 
     class Meta:
         model = Card
         fields = "__all__"
 
-    """
     def create(self, validated_data):
         account_data = validated_data.pop('account')
-        #account_serializer = AccountSerializer(data=account_data)  # Create a UserSerializer instance
-        #account_serializer.is_valid(raise_exception=True)
-        #account = account_serializer.save()  # Save the user instance
-
-        card = Card.objects.create(account=account_data, **validated_data)
+        validated_data['account'] = account_data
+        card = Card.objects.create(**validated_data)
         return card
-    """
 
 
 class TransactionSerializer(ModelSerializer):
