@@ -28,6 +28,7 @@ class Card(models.Model):
     def __str__(self):
         return self.account
 
+
 class Transaction(models.Model):
     card_id = models.ForeignKey(Card, on_delete=models.CASCADE)
     amount = models.FloatField(default=0.0, blank=False, null=False)
