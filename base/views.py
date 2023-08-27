@@ -14,39 +14,32 @@ from django.db.models import Q
 # Create your views here.
 @api_view(['GET'])
 def endpoints(request):
-    data = ['/users', 'users/:username', 'users/<str:username>/accounts/<str:account_name>/cards/']
+    data = ['/users',
+            'users/:username',
+            'users/<str:username>/accounts/',
+            'users/<str:username>/accounts/<str:account_name>/cards/']
     return Response(data)
 
 
 # READ
-@api_view(['GET', 'POST'])
-def user_list(request):
-    if request.method == 'GET':
+class UserList(APIView):
+
+    def get(self, request):
         query = request.GET.get('query')
         if query == None:
             query = ''
 
-        print(f'\nprinting request parameter: {request}')
-
-        print(f'\nQuery: -->{query}<--')
         users = User.objects.filter(Q(username__icontains=query) | Q(age__icontains=query))
-        print(f'\nList of the users: {list(users)}')
         serializer = UserSerializer(users, many=True)
-        print(f'\nUserSerializer: {serializer}')
-        print(f'\nResponse: {Response(serializer.data)}')
-        return Response(serializer.data)
+        return Response(serializer.data, status.HTTP_200_OK)
 
-    if request.method == 'POST':
-        print(f'\nprinting request parameter: {request}')
+    def post(self, request):
         serializer = UserSerializer(data=request.data)
-        print(f'\nUserSerializer: {serializer}')
-
         if serializer.is_valid():
             serializer.save()
-            print(f'\nResponse: {Response(serializer.data, status=status.HTTP_201_CREATED)}')
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
 """
 
@@ -65,7 +58,7 @@ class UserDetail(APIView):
     def get(self, request, username):
         user = self.get_object(username=username)
         serializer = UserSerializer(user, many=False)
-        return Response(serializer.data)
+        return Response(serializer.data, status.HTTP_200_OK)
 
     def delete(self, request, username):
         user = self.get_object(username=username)
@@ -73,43 +66,31 @@ class UserDetail(APIView):
         return JsonResponse({'message': 'User was successfully deleted'})
 
 
-@api_view(['GET', 'POST'])
-def account_list(request, username):
-    if request.method == 'GET':
-        query = request.GET.get('query')
-        if query == None:
-            query = ''
-
-        print(f'Query: {query}')
+class AccountList(APIView):
+    def get(self, request, username):
 
         try:
             user = User.objects.get(username=username)
-
             accounts = Account.objects.filter(user=user)
-            accounts_data = [
-                {'id': account.id,
-                 'user': account.user,
-                 'account_name': account.account_name,
-                 'balance': account.balance,
-                 'open_date': account.open_date.strftime('%Y-%m-%d')} for account in accounts]
-            serializer = AccountSerializer(accounts_data, many=True)
-            return Response(serializer.data)
+            serializer = AccountSerializer(accounts, many=True)
+            return Response(serializer.data, status.HTTP_200_OK)
         except User.DoesNotExist:
-            return Response({'error': 'User not found.'}, status=404)
+            return Response({'error' : 'User not found'})
 
-    if request.method == 'POST':
+    def post(self, request, username):
 
-        print(f'\n-------> Account Serializer serializer input: {AccountSerializer(data=request.data)}')
-        serializer = AccountSerializer(data=request.data)
-        print(f'\n-------> Account Serializer serializer output: {serializer}')
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status.HTTP_404_NOT_FOUND)
 
+        serializer = AccountSerializer(data={**request.data, 'user': user.id})
 
         if serializer.is_valid():
             serializer.save()
-            print(f'\n{Response(serializer.data, status=status.HTTP_201_CREATED)}')
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
 
 class AccountDetail(APIView):
@@ -123,32 +104,44 @@ class AccountDetail(APIView):
     def get(self, request, username, account_name):
         account = self.get_object(username=username, account_name=account_name)
         serializer = AccountSerializer(account)
-        return Response(serializer.data)
+        return Response(serializer.data, status.HTTP_200_OK)
 
 
-@api_view(['GET', 'POST'])
-def card_list(request, username, account_name):
-    if request.method == 'GET':
-        query = request.GET.get('query')
-        if query is None:
-            query = ''
+class CardList(APIView):
+
+    def get(self, request, username, account_name):
 
         try:
-            account = Account.objects.get(user__username=username, account_name=account_name)
+            user = User.objects.get(username=username)
+            account = Account.objects.get(user=user)
             cards = Card.objects.filter(account=account)
+
             serializer = CardSerializer(cards, many=True)
-            return Response(serializer.data)
+
+            return Response(serializer.data, status.HTTP_200_OK)
+        except User.DoesNotExist:
+            raise JsonResponse({'error': 'User does not exist'})
         except Account.DoesNotExist:
-            return Response({'error': 'Account not found.'}, status=404)
+            raise JsonResponse({'error': 'Account does not exist'})
+        except Card.DoesNotExist:
+            raise JsonResponse({'error': 'Card does not exist'})
 
-    if request.method == 'POST':
-        serializer = CardSerializer(data=request.data)
+    def post(self, request, username, account_name):
 
+        try:
+            user = User.objects.get(username=username)
+            account = Account.objects.get(user=user)
+        except User.DoesNotExist:
+            raise JsonResponse({'error': 'User does not exist'}, status.HTTP_404_NOT_FOUND)
+        except Account.DoesNotExist:
+            raise JsonResponse({'error': 'Account does not exist'}, status.HTTP_404_NOT_FOUND)
+
+        serializer = CardSerializer(data={**request.data, 'account': account.id})
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
 
 class CardDetail(APIView):
