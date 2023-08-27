@@ -48,6 +48,11 @@ def user_list(request):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+"""
+
+This is a intended comment to be between the user list and user detail. 
+
+"""
 
 class UserDetail(APIView):
 
