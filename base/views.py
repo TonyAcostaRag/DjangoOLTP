@@ -14,7 +14,10 @@ from django.db.models import Q
 # Create your views here.
 @api_view(['GET'])
 def endpoints(request):
-    data = ['/users', 'users/:username', 'users/<str:username>/accounts/']
+    data = ['/users',
+            'users/:username',
+            'users/<str:username>/accounts/',
+            'users/<str:username>/accounts/<str:account_name>/cards/']
     return Response(data)
 
 
