@@ -38,6 +38,11 @@ class UserList(APIView):
         else:
             return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
+"""
+
+This is a intended comment to be between the user list and user detail. 
+
+"""
 
 class UserDetail(APIView):
 
