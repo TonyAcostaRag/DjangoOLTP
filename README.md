@@ -39,17 +39,18 @@ GET request:
 Response expected: A list with all the available users.
 
 Example of expected response:
+
     [
-      {
-        "id": 1,
-        "username": "Tony",
-        "age": 29
-      },
-      {
-        "id": 2,
-        "username": "User1",
-        "age": 20
-      }
+        {
+            "id": 1,
+            "username": "Tony",
+            "age": 29
+        },
+        {
+            "id": 2,
+            "username": "User1",
+            "age": 20
+        }
     ]
 
 
@@ -162,6 +163,7 @@ Expected response: The json with the attributes for the requested account:
     users/<username>/accounts/<account_name>/cards/
 
 POST request:
+
     URL: http://localhost:8000/users/<username>/accounts/<account_name>/cards/
 
 payload:
