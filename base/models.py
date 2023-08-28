@@ -33,4 +33,4 @@ class Transaction(models.Model):
     card_id = models.ForeignKey(Card, on_delete=models.CASCADE)
     amount = models.FloatField(default=0.0, blank=False, null=False)
     transaction_type = models.CharField(max_length=10) # Deposit, Withdrawal
-    craete_date = models.DateField(auto_now_add=True)
+    create_date = models.DateField(auto_now_add=True)

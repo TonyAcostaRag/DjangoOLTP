@@ -37,4 +37,4 @@ class CardSerializer(ModelSerializer):
 class TransactionSerializer(ModelSerializer):
     class Meta:
         model = Transaction
-        field = "__all__"
+        fields = ['card_id', 'amount', 'transaction_type']
