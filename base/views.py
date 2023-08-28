@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 from django.http import Http404
-from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,14 +17,12 @@ def endpoints(request):
     data = ['/users',
             'users/:username',
             'users/<str:username>/accounts/',
-            'users/<str:username>/accounts/<str:account_name>/cards/']
+            'users/<str:username>/accounts/<str:account_name>',
+            'users/<str:username>/accounts/<str:account_name>/cards/'
+            'users/<str:username>/accounts/<str:account_name>/cards/<str:account>']
     return Response(data)
 
-
-# USER instances
-
-
-# CREATE READ
+# USER CRUD
 class UserList(APIView):
 
     def get(self, request):
@@ -91,6 +88,7 @@ class UserDetail(APIView):
         return Response({'message': 'User was successfully deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 
+# ACCOUNT CRUD
 class AccountList(APIView):
     def get(self, request, username):
 
@@ -123,13 +121,20 @@ class AccountDetail(APIView):
         try:
             user = User.objects.get(username=username)
             return Account.objects.get(user=user, account_name=account_name)
+        except User.DoesNotExist:
+            raise Http404
         except Account.DoesNotExist:
-            raise JsonResponse({'error': 'Account does not exist'})
+            raise Http404
 
     def get(self, request, username, account_name):
         account = self.get_object(username=username, account_name=account_name)
         serializer = AccountSerializer(account)
         return Response(serializer.data, status.HTTP_200_OK)
+
+    def delete(self, request, username,  account_name):
+        account = self.get_object(username=username, account_name=account_name)
+        account.delete()
+        return Response({"Message": "Account was successfully deleted"}, status.HTTP_204_NO_CONTENT)
 
 
 class CardList(APIView):
