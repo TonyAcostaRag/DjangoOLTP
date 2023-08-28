@@ -71,16 +71,13 @@ class UserDetail(APIView):
 
     def patch(self, request, username):
 
-        try:
-            user = self.get_object(username=username)
-            serializer = UserSerializer(user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status.HTTP_200_OK)
+        user = self.get_object(username=username)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
 
-            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
-            Response({"Error": "User not found"})
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, username):
         user = self.get_object(username=username)
@@ -130,6 +127,24 @@ class AccountDetail(APIView):
         account = self.get_object(username=username, account_name=account_name)
         serializer = AccountSerializer(account)
         return Response(serializer.data, status.HTTP_200_OK)
+
+    def put(self, request, username, account_name, pk=None):
+        account = self.get_object(username=username, account_name=account_name)
+        serializer = AccountSerializer(account, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, username, account_name):
+        account = self.get_object(username=username, account_name=account_name)
+        serializer = AccountSerializer(account, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, username,  account_name):
         account = self.get_object(username=username, account_name=account_name)
