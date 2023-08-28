@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.http import Http404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,11 +17,12 @@ def endpoints(request):
     data = ['/users',
             'users/:username',
             'users/<str:username>/accounts/',
-            'users/<str:username>/accounts/<str:account_name>/cards/']
+            'users/<str:username>/accounts/<str:account_name>',
+            'users/<str:username>/accounts/<str:account_name>/cards/'
+            'users/<str:username>/accounts/<str:account_name>/cards/<str:account>']
     return Response(data)
 
-
-# READ
+# USER CRUD
 class UserList(APIView):
 
     def get(self, request):
@@ -41,11 +42,6 @@ class UserList(APIView):
         else:
             return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
-"""
-
-This is a intended comment to be between the user list and user detail. 
-
-"""
 
 class UserDetail(APIView):
 
@@ -53,19 +49,43 @@ class UserDetail(APIView):
         try:
             return User.objects.get(username=username)
         except User.DoesNotExist:
-            raise JsonResponse('User does not exist')
+            raise Http404
 
     def get(self, request, username):
         user = self.get_object(username=username)
         serializer = UserSerializer(user, many=False)
         return Response(serializer.data, status.HTTP_200_OK)
 
+    def put(self, request, username, pk=None):
+        try:
+            user = self.get_object(username=username)
+            serializer = UserSerializer(user, data=request.data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status.HTTP_200_OK)
+
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"Error": "User not found"})
+
+    def patch(self, request, username):
+
+        user = self.get_object(username=username)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
     def delete(self, request, username):
         user = self.get_object(username=username)
         user.delete()
-        return JsonResponse({'message': 'User was successfully deleted'})
+        return Response({'message': 'User was successfully deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 
+# ACCOUNT CRUD
 class AccountList(APIView):
     def get(self, request, username):
 
@@ -98,13 +118,38 @@ class AccountDetail(APIView):
         try:
             user = User.objects.get(username=username)
             return Account.objects.get(user=user, account_name=account_name)
+        except User.DoesNotExist:
+            raise Http404
         except Account.DoesNotExist:
-            raise JsonResponse({'error': 'Account does not exist'})
+            raise Http404
 
     def get(self, request, username, account_name):
         account = self.get_object(username=username, account_name=account_name)
-        serializer = AccountSerializer(account)
+        serializer = AccountSerializer(account, many=False)
         return Response(serializer.data, status.HTTP_200_OK)
+
+    def put(self, request, username, account_name, pk=None):
+        account = self.get_object(username=username, account_name=account_name)
+        serializer = AccountSerializer(account, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, username, account_name):
+        account = self.get_object(username=username, account_name=account_name)
+        serializer = AccountSerializer(account, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, username,  account_name):
+        account = self.get_object(username=username, account_name=account_name)
+        account.delete()
+        return Response({"Message": "Account was successfully deleted"}, status.HTTP_204_NO_CONTENT)
 
 
 class CardList(APIView):
@@ -114,17 +159,16 @@ class CardList(APIView):
         try:
             user = User.objects.get(username=username)
             account = Account.objects.get(user=user)
-            cards = Card.objects.filter(account=account)
 
-            serializer = CardSerializer(cards, many=True)
+            if account.account_name == account_name:
+                cards = Card.objects.filter(account=account)
+                serializer = CardSerializer(cards, many=True)
+                return Response(serializer.data, status.HTTP_200_OK)
 
-            return Response(serializer.data, status.HTTP_200_OK)
         except User.DoesNotExist:
             raise JsonResponse({'error': 'User does not exist'})
         except Account.DoesNotExist:
             raise JsonResponse({'error': 'Account does not exist'})
-        except Card.DoesNotExist:
-            raise JsonResponse({'error': 'Card does not exist'})
 
     def post(self, request, username, account_name):
 
@@ -145,14 +189,40 @@ class CardList(APIView):
 
 
 class CardDetail(APIView):
-    def get_object(self, user_account, card_name):
-        try:
-            account = Account.objects.get(user__username=user_account)
-            return Card.objects.get(account=account, name=card_name)
-        except Card.DoesNotExist:
-            raise JsonResponse({'error': 'Card does not exist'})
+    def get_object(self, username, account_name, name):
 
-    def get(self, request, user_account, card_name):
-        card = self.get_object(user_account=user_account, card_name=card_name)
-        serializer = CardSerializer(card)
-        return Response(serializer.data)
+        try:
+            user = User.objects.get(username=username)
+            account = Account.objects.get(user=user)
+            if account.account_name == account_name:
+                return Card.objects.get(account=account, name=name)
+        except Card.DoesNotExist:
+            raise Http404
+
+    def get(self, request, username, account_name, name):
+        card = self.get_object(username=username, account_name=account_name, name=name)
+        serializer = CardSerializer(card, many=False)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    def put(self, request, username, account_name, name, pk=None):
+        card = self.get_object(username, account_name, name)
+        serializer = CardSerializer(card, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, username, account_name, name):
+        card = self.get_object(username=username, account_name=account_name, name=name)
+        serializer = CardSerializer(card, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, username, account_name, name):
+        card = self.get_object(username=username, account_name=account_name, name=name)
+        card.delete()
+        return Response({"Message": "Card successfully deleted"}, status.HTTP_204_NO_CONTENT)
