@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.http import Http404
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -21,7 +22,10 @@ def endpoints(request):
     return Response(data)
 
 
-# READ
+# USER instances
+
+
+# CREATE READ
 class UserList(APIView):
 
     def get(self, request):
@@ -41,11 +45,6 @@ class UserList(APIView):
         else:
             return Response(serializer.data, status.HTTP_400_BAD_REQUEST)
 
-"""
-
-This is a intended comment to be between the user list and user detail. 
-
-"""
 
 class UserDetail(APIView):
 
@@ -53,17 +52,43 @@ class UserDetail(APIView):
         try:
             return User.objects.get(username=username)
         except User.DoesNotExist:
-            raise JsonResponse('User does not exist')
+            raise Http404
 
     def get(self, request, username):
         user = self.get_object(username=username)
         serializer = UserSerializer(user, many=False)
         return Response(serializer.data, status.HTTP_200_OK)
 
+    def put(self, request, username, pk=None):
+        try:
+            user = self.get_object(username=username)
+            serializer = UserSerializer(user, data=request.data)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status.HTTP_200_OK)
+
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"Error": "User not found"})
+
+    def patch(self, request, username):
+
+        try:
+            user = self.get_object(username=username)
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status.HTTP_200_OK)
+
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            Response({"Error": "User not found"})
+
     def delete(self, request, username):
         user = self.get_object(username=username)
         user.delete()
-        return JsonResponse({'message': 'User was successfully deleted'})
+        return Response({'message': 'User was successfully deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 
 class AccountList(APIView):
