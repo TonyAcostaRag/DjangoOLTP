@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 
-from .models import User, Account, Card
-from .serializers import UserSerializer, AccountSerializer, CardSerializer
+from .models import User, Account, Card, Transaction
+from .serializers import UserSerializer, AccountSerializer, CardSerializer, TransactionSerializer
 
 from django.db.models import Q
 
@@ -16,10 +16,10 @@ from django.db.models import Q
 def endpoints(request):
     data = ['/users',
             'users/:username',
-            'users/<str:username>/accounts/',
+            'users/<str:username>/accounts',
             'users/<str:username>/accounts/<str:account_name>',
-            'users/<str:username>/accounts/<str:account_name>/cards/'
-            'users/<str:username>/accounts/<str:account_name>/cards/<str:account>']
+            'users/<str:username>/accounts/<str:account_name>/cards'
+            'users/<str:username>/accounts/<str:account_name>/cards/<str:name>']
     return Response(data)
 
 # USER CRUD
@@ -226,3 +226,17 @@ class CardDetail(APIView):
         card = self.get_object(username=username, account_name=account_name, name=name)
         card.delete()
         return Response({"Message": "Card successfully deleted"}, status.HTTP_204_NO_CONTENT)
+
+class TransactionList(APIView):
+    def get(self, request):
+        transactions = Transaction.objects.all()
+        serializer = TransactionSerializer(transactions, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = TransactionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)

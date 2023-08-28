@@ -16,5 +16,7 @@ urlpatterns = [
     path('users/<str:username>/accounts/<str:account_name>/cards', views.CardList.as_view()),
     path('users/<str:username>/accounts/<str:account_name>/cards/', views.CardList.as_view()),
     path('users/<str:username>/accounts/<str:account_name>/cards/<str:name>', views.CardDetail.as_view()),
-    path('users/<str:username>/accounts/<str:account_name>/cards/<str:name>/', views.CardDetail.as_view())
+    path('users/<str:username>/accounts/<str:account_name>/cards/<str:name>/', views.CardDetail.as_view()),
+    path('transactions', views.TransactionList.as_view()),
+    path('transactions/', views.TransactionList.as_view())
 ]
